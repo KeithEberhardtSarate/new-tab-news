@@ -1,6 +1,25 @@
 import { Client } from "pg";
 
 async function query(queryObject) {
+  let client;
+
+  try {
+    client = await getNewClient();
+    const result = await client.query(queryObject);
+    return result;
+  } catch (error) {
+    console.log(error);
+  } finally {
+    await client.end();
+  }
+}
+
+export default {
+  query,
+  getNewClient,
+};
+
+async function getNewClient() {
   const postegresCredentials = {
     host: process.env.POSTGRES_HOST,
     port: process.env.POSTGRES_PORT,
@@ -12,20 +31,9 @@ async function query(queryObject) {
 
   const client = new Client(postegresCredentials);
 
-  try {
-    await client.connect();
-    const result = await client.query(queryObject);
-    return result;
-  } catch (error) {
-    console.log(error);
-  } finally {
-    await client.end();
-  }
+  await client.connect();
+  return client;
 }
-
-export default {
-  query: query,
-};
 
 function getSSLValuse() {
   if (process.env.POSTGRES_CA) {
